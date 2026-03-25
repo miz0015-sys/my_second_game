@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Movement with Boundaries</title>
+  <title>Arrow Key Movement</title>
   <style>
     body {
       text-align: center;
@@ -17,63 +17,48 @@
 </head>
 <body>
 
-<h2>Use Arrow Keys</h2>
+<h2>Use Arrow Keys to Move</h2>
 <canvas id="game" width="500" height="400"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Player
+// Player (circle)
 let player = {
-  x: 60,
-  y: 60,
-  radius: 10,
+  x: 50,
+  y: 50,
+  size: 20,
   speed: 3
 };
 
-// Walls (boundaries)
-let walls = [
-  {x: 0, y: 0, width: 500, height: 10},   // top
-  {x: 0, y: 390, width: 500, height: 10}, // bottom
-  {x: 0, y: 0, width: 10, height: 400},   // left
-  {x: 490, y: 0, width: 10, height: 400}  // right
-];
+// Obstacle (rectangle)
+let obstacle = {
+  x: 200,
+  y: 150,
+  width: 120,
+  height: 60
+};
 
-// Obstacle
-let obstacle = {x: 200, y: 150, width: 240, height: 60};
-
-// Keys
+// Track keys
 let keys = {};
 
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+document.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+});
 
-// Collision check (circle vs rectangle)
-function collidesCircleRect(cx, cy, radius, rect) {
-  let closestX = Math.max(rect.x, Math.min(cx, rect.x + rect.width));
-  let closestY = Math.max(rect.y, Math.min(cy, rect.y + rect.height));
+document.addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+});
 
-  let dx = cx - closestX;
-  let dy = cy - closestY;
-
-  return (dx * dx + dy * dy) < (radius * radius);
-}
-
-function canMove(newX, newY) {
-  // Check walls
-  for (let wall of walls) {
-    if (collidesCircleRect(newX, newY, player.radius, wall)) {
-      return false;
-    }
-  }
-
-  // Check obstacle
-  if (collidesCircleRect(newX, newY, player.radius, obstacle)) {
-    return false;
-  }
-
-  return true;
+// Check collision
+function isColliding(x, y) {
+  return (
+    x < obstacle.x + obstacle.width &&
+    x + player.size > obstacle.x &&
+    y < obstacle.y + obstacle.height &&
+    y + player.size > obstacle.y
+  );
 }
 
 function update() {
@@ -85,7 +70,16 @@ function update() {
   if (keys["ArrowLeft"]) newX -= player.speed;
   if (keys["ArrowRight"]) newX += player.speed;
 
-  if (canMove(newX, newY)) {
+  // Boundary limits
+  if (newX < 0) newX = 0;
+  if (newY < 0) newY = 0;
+  if (newX + player.size > canvas.width)
+    newX = canvas.width - player.size;
+  if (newY + player.size > canvas.height)
+    newY = canvas.height - player.size;
+
+  // Block obstacle
+  if (!isColliding(newX, newY)) {
     player.x = newX;
     player.y = newY;
   }
@@ -94,4 +88,25 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
- 
+  // Draw player (circle)
+  ctx.beginPath();
+  ctx.arc(player.x + 10, player.y + 10, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "blue";
+  ctx.fill();
+
+  // Draw obstacle
+  ctx.fillStyle = "red";
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
