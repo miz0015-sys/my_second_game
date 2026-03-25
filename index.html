@@ -1,100 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Map Game</title>
+  <title>Arrow Key Movement</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { background: #111; display: block; }
+    body {
+      text-align: center;
+      font-family: Arial;
+    }
+
+    canvas {
+      border: 2px solid black;
+      background: #f0f0f0;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
-<canvas id="game"></canvas>
+<h2>Use Arrow Keys to Move</h2>
+<canvas id="game" width="500" height="400"></canvas>
 
 <script>
-// 👇 ALL your game code goes here
-
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// Player
-const player = {
-  x: 500,
-  y: 500,
-  radius: 20,
-  speed: 4
+// Player (circle)
+let player = {
+  x: 50,
+  y: 50,
+  size: 20,
+  speed: 3
 };
 
-// Obstacles
-const obstacles = [
-  { x: 300, y: 300, w: 200, h: 50 },
-  { x: 600, y: 500, w: 150, h: 150 }
-];
+// Obstacle (rectangle)
+let obstacle = {
+  x: 200,
+  y: 150,
+  width: 120,
+  height: 60
+};
 
-// Input
-const keys = {};
-window.addEventListener("keydown", e => keys[e.key] = true);
-window.addEventListener("keyup", e => keys[e.key] = false);
+// Track keys
+let keys = {};
 
-// ✅ COLLISION FUNCTIONS
-function isColliding(circle, rect) {
-  const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
-  const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+document.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+});
 
-  const dx = circle.x - closestX;
-  const dy = circle.y - closestY;
+document.addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+});
 
-  return (dx * dx + dy * dy) < (circle.radius * circle.radius);
+// Check collision
+function isColliding(x, y) {
+  return (
+    x < obstacle.x + obstacle.width &&
+    x + player.size > obstacle.x &&
+    y < obstacle.y + obstacle.height &&
+    y + player.size > obstacle.y
+  );
 }
 
-function canMove(newX, newY) {
-  for (let o of obstacles) {
-    const test = { x: newX, y: newY, radius: player.radius };
-    if (isColliding(test, o)) return false;
-  }
-  return true;
-}
-
-// Movement
 function update() {
-  let dx = 0;
-  let dy = 0;
+  let newX = player.x;
+  let newY = player.y;
 
-  if (keys["ArrowUp"]) dy -= player.speed;
-  if (keys["ArrowDown"]) dy += player.speed;
-  if (keys["ArrowLeft"]) dx -= player.speed;
-  if (keys["ArrowRight"]) dx += player.speed;
+  if (keys["ArrowUp"]) newY -= player.speed;
+  if (keys["ArrowDown"]) newY += player.speed;
+  if (keys["ArrowLeft"]) newX -= player.speed;
+  if (keys["ArrowRight"]) newX += player.speed;
 
-  let newX = player.x + dx;
-  let newY = player.y + dy;
+  // Boundary limits
+  if (newX < 0) newX = 0;
+  if (newY < 0) newY = 0;
+  if (newX + player.size > canvas.width)
+    newX = canvas.width - player.size;
+  if (newY + player.size > canvas.height)
+    newY = canvas.height - player.size;
 
-  if (canMove(newX, newY)) {
+  // Block obstacle
+  if (!isColliding(newX, newY)) {
     player.x = newX;
     player.y = newY;
   }
 }
 
-// Draw
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Obstacles
-  ctx.fillStyle = "red";
-  obstacles.forEach(o => {
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-  });
-
-  // Player
+  // Draw player (circle)
   ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-  ctx.fillStyle = "cyan";
+  ctx.arc(player.x + 10, player.y + 10, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "blue";
   ctx.fill();
+
+  // Draw obstacle
+  ctx.fillStyle = "red";
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 }
 
-// Loop
 function loop() {
   update();
   draw();
@@ -102,7 +106,7 @@ function loop() {
 }
 
 loop();
-
 </script>
+
 </body>
 </html>
